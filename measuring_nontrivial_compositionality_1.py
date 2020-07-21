@@ -10,15 +10,17 @@ Original file is located at
 import random
 from itertools import product
 import string
-from typing import Callable, List, Dict, Tuple, Iterable
+from typing import Callable, List, Dict, Tuple, Iterable, Type
 from collections import defaultdict
 
-# !pip install editdistance scipy torch &>/dev/null
+# !pip install editdistance scipy torch tqdm &>/dev/null
 import numpy as np
 from scipy.stats import spearmanr
 from scipy.spatial.distance import hamming
+import pandas as pd
 import torch
 import editdistance
+from tqdm import trange
 
 POSSIBLE_COLORS = ['blue', 'green', 'gold', 'yellow', 'red', 'orange', 'black', 'white']
 POSSIBLE_SHAPES = ['square', 'circle', 'ellipse', 'triangle', 'rectangle', 'pentagon', 'hexagon', 'cross']
@@ -102,7 +104,7 @@ class TopographicSimilarity:
 
 protocol = get_random_protocol(5, 5)
 similarity = TopographicSimilarity(
-    input_metric=hamming,
+    input_metric=hamming, 
     messages_metric=editdistance.eval)
 similarity.measure(protocol)
 
@@ -150,26 +152,36 @@ class ContextIndependence:
 protocol = get_holistic_protocol(10, 10)
 ci = ContextIndependence(10, 10)
 np.set_printoptions(precision=1, suppress=True)
+print(protocol)
+print(ci.measure(protocol))
+
+class CompositionFunction(torch.nn.Module):
+
+    def __init__(self, representation_size: int):
+        super().__init__()
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        raise NotImplemented
 
 
-class AdditiveComposition(torch.nn.Module):
+class AdditiveComposition(CompositionFunction):
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return x + y
 
 
-class LinearComposition(torch.nn.Module):
+class LinearComposition(CompositionFunction):
     def __init__(self, representation_size: int):
-        super().__init__()
+        super().__init__(representation_size)
         self.linear = torch.nn.Linear(representation_size * 2, representation_size)
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return self.linear(torch.cat((x, y), dim=1))
 
 
-class MLPComposition(torch.nn.Module):
+class MLPComposition(CompositionFunction):
     def __init__(self, representation_size: int):
-        super().__init__()
+        super().__init__(representation_size)
         self.linear_1 = torch.nn.Linear(representation_size * 2, 50)
         self.linear_2 = torch.nn.Linear(50, representation_size)
 
@@ -177,9 +189,19 @@ class MLPComposition(torch.nn.Module):
         return self.linear_2(torch.tanh(self.linear_1(torch.cat((x, y), dim=1))))
 
 
-class MultiplicativeComposition(torch.nn.Module):
+class LinearMultiplicationComposition(CompositionFunction):
     def __init__(self, representation_size: int):
-        super().__init__()
+        super().__init__(representation_size)
+        self.linear_1 = torch.nn.Linear(representation_size, representation_size)
+        self.linear_2 = torch.nn.Linear(representation_size, representation_size)
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return self.linear_1(x) * self.linear_2(y)
+
+
+class MultiplicativeComposition(CompositionFunction):
+    def __init__(self, representation_size: int):
+        super().__init__(representation_size)
         self.bilinear = torch.nn.Bilinear(
             in1_features=representation_size,
             in2_features=representation_size,
@@ -190,14 +212,20 @@ class MultiplicativeComposition(torch.nn.Module):
         return self.bilinear(x, y)
 
 
-class CustomLoss(torch.nn.Module):
+class DoubleCrossEntropyLoss(torch.nn.Module):
 
-    def forward(self, y, yhat):
-        yhat = yhat.unsqueeze(dim=0)
-        first, second = y[:, :8], y[:, 8:]
-        first_target, second_target = yhat[:, :8].argmax(keepdim=True).unsqueeze(dim=0), yhat[:, 8:].argmax(keepdim=True).unsqueeze(dim=0)
-        return torch.nn.functional.cross_entropy(first, first_target) + torch.nn.functional.cross_entropy(second,
-                                                                                                          second_target)
+    def __init__(self, message_length: int):
+        super().__init__()
+        assert message_length == 2, 'message_length != 2 not implemented yet'
+        self.message_length = message_length
+
+    def forward(self, reconstruction, message):
+        middle = int(self.message_length/2)
+        first, second = reconstruction[:, :middle], reconstruction[:, middle:]
+        first_target, second_target = message[:, :middle].argmax(dim=1), message[:, middle:].argmax(dim=1)
+        first_loss = torch.nn.functional.cross_entropy(first, first_target)
+        second_loss = torch.nn.functional.cross_entropy(second, second_target)
+        return first_loss + second_loss
 
 
 class Objective(torch.nn.Module):
@@ -217,24 +245,31 @@ class Objective(torch.nn.Module):
         if zero_init:
             self.emb.weight.data.zero_()
 
-    def compose(self, derivation):
-        if isinstance(derivation, tuple):
-            args = (self.compose(node) for node in derivation)
+    def compose(self, derivations):
+        if isinstance(derivations, tuple):
+            args = (self.compose(node) for node in derivations)
             return self.composition_fn(*args)
         else:
-            return self.emb(derivation)
+            return self.emb(derivations)
 
-    def forward(self, message, derivation):
-        return self.loss_fn(self.compose(derivation), message)
+    def forward(self, messages, derivations):
+        return self.loss_fn(self.compose(derivations), messages)
 
 
 class TreeReconstructionError:
 
-    def __init__(self, num_colors: int, num_shapes: int, message_length: int):
+    def __init__(
+            self,
+            num_colors: int,
+            num_shapes: int,
+            message_length: int,
+            composition_fn: Type[CompositionFunction],
+    ):
         self.num_colors = num_colors
         self.num_shapes = num_shapes
         self.num_concepts = num_colors + num_shapes
         self.message_length = message_length
+        self.composition_fn = composition_fn
 
     def measure(self, protocol: Protocol) -> float:
         tensorised_protocol = self._protocol_to_tensor(protocol)
@@ -243,24 +278,33 @@ class TreeReconstructionError:
             num_concepts=self.num_concepts,
             vocab_size=len(vocab),
             message_length=self.message_length,
-            composition_fn=MLPComposition(representation_size=self.message_length * len(vocab)),
-            loss_fn=CustomLoss()
+            composition_fn=self.composition_fn(representation_size=self.message_length * len(vocab)),
+            loss_fn=DoubleCrossEntropyLoss(message_length=self.message_length)
         )
+        messages, derivations = self._to_batch(tensorised_protocol.values(), tensorised_protocol.keys())
         reconstruction_error = self._train_model(
-            X=tensorised_protocol.values(),
-            y=tensorised_protocol.keys(),
+            messages=messages,
+            derivations=derivations,
             objective=objective,
-            optimizer=torch.optim.Adam(objective.parameters(), lr=5e-4, weight_decay=0.0001),
+            optimizer=torch.optim.Adam(objective.parameters(), lr=1e-3, weight_decay=0.0001),
             n_epochs=20_000
         )
         return reconstruction_error
 
-    def _to_batch(self, X: Iterable[torch.Tensor], y: Iterable[torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
-        X = torch.stack(tuple(X))
+    def _to_batch(
+            self,
+            messages: Iterable[torch.Tensor],
+            derivations: Iterable[torch.Tensor]
+    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        messages = torch.stack(tuple(messages))
+        left_derivations, right_derivations = zip(*derivations)
+        left_derivations, right_derivations = torch.cat(tuple(left_derivations)), torch.cat(tuple(right_derivations))
+        return messages, (left_derivations, right_derivations)
+
     def _train_model(
             self,
-            X: Iterable[torch.Tensor],
-            y: Iterable[torch.Tensor],
+            messages: Iterable[torch.Tensor],
+            derivations: Iterable[torch.Tensor],
             objective: torch.nn.Module,
             optimizer: torch.optim.Optimizer,
             n_epochs: int,
@@ -268,8 +312,9 @@ class TreeReconstructionError:
     ) -> float:
         for t in range(n_epochs):
             optimizer.zero_grad()
-            errors = [objective(message, derivation) for message, derivation in zip(X, y)]
-            loss = sum(errors)
+            loss = objective(messages, derivations).sum()
+            # errors = [objective(message, derivation) for message, derivation in zip(message, derivation)]
+            # loss = sum(errors)
             loss.backward()
             if not quiet and t % 1000 == 0:
                 print(f'Training loss at epoch {t} is {loss.item():.4f}')
@@ -295,24 +340,45 @@ class TreeReconstructionError:
         return {char: idx for idx, char in enumerate(character_set)}
 
 
-NUM_COLORS = NUM_SHAPES = 4
-PROTOCOLS = {
-    # 'holistic': get_holistic_protocol(NUM_COLORS, NUM_SHAPES),
-    'trivial': get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES),
-    # 'random': get_random_protocol(NUM_COLORS, NUM_SHAPES),
-    'nontrivial': get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES),
-}
+NUM_COLORS = NUM_SHAPES = 5
+df = pd.DataFrame(columns=['protocol', 'metric', 'value', 'seed'])
 
-for name, protocol in PROTOCOLS.items():
-    print(name)
-    tre = TreeReconstructionError(NUM_COLORS, NUM_SHAPES, 2)
-    print(f'tre = {tre.measure(protocol):.4f}')
-    ci = ContextIndependence(NUM_COLORS, NUM_SHAPES)
-    print(f'ci = {ci.measure(protocol):.4f}')
-    topo = TopographicSimilarity(
-        input_metric=hamming,
-        messages_metric=editdistance.eval
-    )
-    print(f'topo = {topo.measure(protocol):.4f}')
+for seed in trange(1):
+    protocols = {
+    'holistic': get_holistic_protocol(NUM_COLORS, NUM_SHAPES),
+    'trivially compositional': get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES),
+    'random': get_random_protocol(NUM_COLORS, NUM_SHAPES),
+    'non-trivially compositional': get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES),
+    }
+    for name, protocol in PROTOCOLS.items():
+        # print(name)
+        tre1 = TreeReconstructionError(NUM_COLORS, NUM_SHAPES, 2, LinearComposition)
+        tre1_value = tre.measure(protocol)
+        # print(f'tre = {tre_value:.4f}')
+        df.loc[len(df)] = [name, 'TRE with linear composition', -tre1_value, seed]
+
+        tre2 = TreeReconstructionError(NUM_COLORS, NUM_SHAPES, 2, AdditiveComposition)
+        tre2_value = tre2.measure(protocol)
+        # print(f'tre = {tre_value:.4f}')
+        df.loc[len(df)] = [name, 'TRE with additive composition', -tre2_value, seed]
+
+        ci = ContextIndependence(NUM_COLORS, NUM_SHAPES)
+        ci_value = ci.measure(protocol)
+        # print(f'ci = {ci_value:.4f}')
+        df.loc[len(df)] = [name, 'context independence', ci_value, seed]
+
+        topo = TopographicSimilarity(
+            input_metric=hamming,
+            messages_metric=editdistance.eval
+        )
+        topo_value = topo.measure(protocol)
+        # print(f'topo = {topo_value:.4f}')
+        df.loc[len(df)] = [name, 'topographical similarity', abs(topo_value), seed]
+
+
+df
+
+sns.set_style("white")
+sns.catplot(x='value', y='protocol', col='metric', data=df, kind='box', sharex=False)
 
 
