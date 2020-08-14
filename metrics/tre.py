@@ -2,7 +2,9 @@ from typing import Tuple, Iterable, Dict, Type
 
 import torch
 
-from metrics.base import Metric, Protocol
+from metrics.base import Metric
+from metrics.utils import flatten_derivation, derivation_to_tensor
+from protocols import Protocol
 
 
 class CompositionFunction(torch.nn.Module):
@@ -115,14 +117,11 @@ class TreeReconstructionError(Metric):
 
     def __init__(
             self,
-            num_colors: int,
-            num_shapes: int,
+            num_concepts: int,
             message_length: int,
             composition_fn: Type[CompositionFunction],
     ):
-        self.num_colors = num_colors
-        self.num_shapes = num_shapes
-        self.num_concepts = num_colors + num_shapes
+        self.num_concepts = num_concepts
         self.message_length = message_length
         self.composition_fn = composition_fn
 
@@ -166,14 +165,13 @@ class TreeReconstructionError(Metric):
 
     def _protocol_to_tensor(self, protocol: Protocol) -> Dict[Tuple[torch.LongTensor, torch.LongTensor], torch.LongTensor]:
         vocab = self._get_vocab(protocol)
-        concept_set = set(concept for concepts in protocol.keys() for concept in concepts)
+        concept_set = set(concept for derivation in protocol.keys() for concept in flatten_derivation(derivation))
         concepts = {concept: idx for idx, concept in enumerate(concept_set)}
         tensorized_protocol = {}
-        for (color, shape), message in protocol.items():
-            color = torch.LongTensor([concepts[color]])
-            shape = torch.LongTensor([concepts[shape]])
+        for derivation, message in protocol.items():
+            derivation = derivation_to_tensor(derivation, concepts)
             message = torch.LongTensor([vocab[char] for char in message])
-            tensorized_protocol[color, shape] = torch.nn.functional.one_hot(
+            tensorized_protocol[derivation] = torch.nn.functional.one_hot(
                 message, num_classes=len(vocab)).reshape(-1)
         return tensorized_protocol
 

@@ -5,8 +5,8 @@ from typing import Tuple, Union, Dict
 from copy import deepcopy
 
 
-TreeNode = Union[str, Tuple['TreeNode', 'TreeNode']]
-Protocol = Dict[TreeNode, str]
+Derivation = Union[str, Tuple['Derivation', 'Derivation']]
+Protocol = Dict[Derivation, str]
 
 POSSIBLE_COLORS = ['blue', 'green', 'gold', 'yellow', 'red', 'orange', 'black', 'white']
 POSSIBLE_SHAPES = ['square', 'circle', 'ellipse', 'triangle', 'rectangle', 'pentagon', 'hexagon', 'cross']
