@@ -70,13 +70,17 @@ class MultipleCrossEntropyLoss(torch.nn.Module):
         self.message_length = message_length
 
     def forward(self, reconstruction, message):
-        assert self.message_length == 2
-        middle = int(self.representation_size/2)
-        first_reconstruction, second_reconstruction = reconstruction[:, :middle], reconstruction[:, middle:]
-        first_target, second_target = message[:middle].argmax(dim=0), message[middle:].argmax(dim=0)
-        first_loss = torch.nn.functional.cross_entropy(first_reconstruction, first_target.reshape(1))
-        second_loss = torch.nn.functional.cross_entropy(second_reconstruction, second_target.reshape(1))
-        return first_loss + second_loss
+        assert self.representation_size % self.message_length == 0
+        width_of_single_symbol = self.representation_size//self.message_length
+        loss = 0
+        for i in range(self.message_length):
+            start = width_of_single_symbol * i
+            end = width_of_single_symbol * (i+1)
+            loss += torch.nn.functional.cross_entropy(
+                reconstruction[:, start:end],
+                message[start:end].argmax(dim=0).reshape(1)
+            )
+        return loss
 
 
 class Objective(torch.nn.Module):
@@ -137,7 +141,7 @@ class TreeReconstructionError(Metric):
             derivations=tensorised_protocol.keys(),
             objective=objective,
             optimizer=torch.optim.Adam(objective.parameters(), lr=1e-3, weight_decay=1e-3),
-            n_epochs=10_000
+            n_epochs=5_000
         )
         return reconstruction_error
 
