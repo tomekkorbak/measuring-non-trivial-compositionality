@@ -2,7 +2,7 @@ from typing import Dict
 
 import torch
 
-from protocols import Derivation
+from protocols import Derivation, Protocol
 
 
 def flatten_derivation(derivation: Derivation):
@@ -22,3 +22,8 @@ def derivation_to_tensor(derivation: Derivation, concepts: Dict[str, int]):
                 derivation_to_tensor(derivation[1], concepts))
     else:
         raise TypeError('Invalid derivation')
+
+
+def get_vocab_from_protocol(protocol: Protocol) -> Dict[str, int]:
+    character_set = set(c for message in protocol.values() for c in message)
+    return {char: idx for idx, char in enumerate(character_set)}

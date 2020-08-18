@@ -8,12 +8,11 @@ from copy import deepcopy
 Derivation = Union[str, Tuple['Derivation', 'Derivation']]
 Protocol = Dict[Derivation, str]
 
-POSSIBLE_COLORS = ['blue', 'green', 'gold', 'yellow', 'red', 'orange', 'black', 'white']
-POSSIBLE_SHAPES = ['square', 'circle', 'ellipse', 'triangle', 'rectangle', 'pentagon', 'hexagon', 'cross']
+POSSIBLE_COLORS = ['blue', 'green', 'gold', 'yellow', 'red', 'orange', 'black', 'white'] + [f'color_{i}' for i in range(25)]
+POSSIBLE_SHAPES = ['square', 'circle', 'ellipse', 'triangle', 'rectangle', 'pentagon', 'hexagon', 'cross'] + [f'shape_{i}' for i in range(25)]
 
 
 def get_trivially_compositional_protocol(num_colors: int, num_shapes: int) -> Protocol:
-    assert num_colors < 9 and num_shapes < 9
     objects = product(POSSIBLE_COLORS[:num_colors], POSSIBLE_SHAPES[:num_shapes])
     alphabet = list(string.ascii_letters[:num_colors+num_shapes])
     random.shuffle(alphabet)
@@ -33,7 +32,6 @@ def get_nontrivially_compositional_protocol(num_colors: int, num_shapes: int) ->
     Adapted from
     https://github.com/facebookresearch/EGG/blob/4f21c31f82e60c5662b088a66d6f1cbd3f1e6425/egg/zoo/compositional_efficiency/archs.py#L53
     """
-    assert num_colors < 9 and num_shapes < 9
     num_letters = num_colors + num_shapes
     alphabet = list(string.ascii_letters[:num_letters])
     random.shuffle(alphabet)

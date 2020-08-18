@@ -3,7 +3,7 @@ from typing import Tuple, Iterable, Dict, Type
 import torch
 
 from metrics.base import Metric
-from metrics.utils import flatten_derivation, derivation_to_tensor
+from metrics.utils import flatten_derivation, derivation_to_tensor, get_vocab_from_protocol
 from protocols import Protocol
 
 
@@ -127,7 +127,7 @@ class TreeReconstructionError(Metric):
 
     def measure(self, protocol: Protocol) -> float:
         tensorised_protocol = self._protocol_to_tensor(protocol)
-        vocab = self._get_vocab(protocol)
+        vocab = get_vocab_from_protocol(protocol)
         objective = Objective(
             num_concepts=self.num_concepts,
             vocab_size=len(vocab),
@@ -164,7 +164,7 @@ class TreeReconstructionError(Metric):
         return loss.item()
 
     def _protocol_to_tensor(self, protocol: Protocol) -> Dict[Tuple[torch.LongTensor, torch.LongTensor], torch.LongTensor]:
-        vocab = self._get_vocab(protocol)
+        vocab = get_vocab_from_protocol(protocol)
         concept_set = set(concept for derivation in protocol.keys() for concept in flatten_derivation(derivation))
         concepts = {concept: idx for idx, concept in enumerate(concept_set)}
         tensorized_protocol = {}
@@ -174,7 +174,3 @@ class TreeReconstructionError(Metric):
             tensorized_protocol[derivation] = torch.nn.functional.one_hot(
                 message, num_classes=len(vocab)).reshape(-1)
         return tensorized_protocol
-
-    def _get_vocab(self, protocol: Protocol) -> Dict[str, int]:
-        character_set = set(c for message in protocol.values() for c in message)
-        return {char: idx for idx, char in enumerate(character_set)}
