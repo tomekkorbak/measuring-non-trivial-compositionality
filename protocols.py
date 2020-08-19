@@ -8,8 +8,8 @@ from copy import deepcopy
 Derivation = Union[str, Tuple['Derivation', 'Derivation']]
 Protocol = Dict[Derivation, str]
 
-POSSIBLE_COLORS = ['blue', 'green', 'gold', 'yellow', 'red', 'orange', 'black', 'white'] + [f'color_{i}' for i in range(25)]
-POSSIBLE_SHAPES = ['square', 'circle', 'ellipse', 'triangle', 'rectangle', 'pentagon', 'hexagon', 'cross'] + [f'shape_{i}' for i in range(25)]
+POSSIBLE_COLORS = ['blue', 'green', 'gold', 'yellow', 'red', 'orange'] + [f'color_{i}' for i in range(25)]
+POSSIBLE_SHAPES = ['square', 'circle', 'ellipse', 'triangle', 'rectangle', 'pentagon'] + [f'shape_{i}' for i in range(25)]
 
 
 def get_trivially_compositional_protocol(num_colors: int, num_shapes: int) -> Protocol:
