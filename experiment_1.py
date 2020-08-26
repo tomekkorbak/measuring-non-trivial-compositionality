@@ -3,6 +3,8 @@ import editdistance
 
 import pandas as pd
 import seaborn as sns
+import matplotlib
+matplotlib.use('Agg')
 import neptune
 from neptunecontrib.api import log_table
 from neptunecontrib.api.utils import get_filepaths
