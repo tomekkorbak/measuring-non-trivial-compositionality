@@ -7,7 +7,6 @@ matplotlib.use('Agg')
 import seaborn as sns
 import neptune
 from neptunecontrib.api import log_table
-from neptunecontrib.api.utils import get_filepaths
 
 from metrics.topographic_similarity import TopographicSimilarity
 from metrics.context_independence import ContextIndependence
@@ -19,11 +18,11 @@ from protocols import get_trivially_compositional_protocol, get_random_protocol,
 
 
 sns.set_style("white")
-NUM_COLORS = NUM_SHAPES = 5
+NUM_COLORS = NUM_SHAPES = 25
 NUM_SEEDS = 1
 df = pd.DataFrame(columns=['protocol', 'metric', 'value', 'seed'])
 neptune.init('tomekkorbak/ntc')
-neptune.create_experiment(upload_source_files=get_filepaths(), properties=dict(num_seeds=NUM_SEEDS, num_colors=NUM_COLORS))
+neptune.create_experiment(upload_source_files=['**/*.py*'], properties=dict(num_seeds=NUM_SEEDS, num_colors=NUM_COLORS))
 
 protocols = {
     'holistic': get_holistic_protocol(NUM_COLORS, NUM_SHAPES),
@@ -38,10 +37,10 @@ metrics = {
         messages_metric=editdistance.eval
     ),
     'context independence': ContextIndependence(NUM_COLORS, NUM_SHAPES),
-    # 'TRE additive': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, 2, AdditiveComposition),
-    # 'TRE linear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, 2, LinearComposition),
-    # 'TRE nonlinear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, 2, MLPComposition),
-    # 'generalisation': Generalisation(),
+    'TRE additive': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, 2, AdditiveComposition),
+    'TRE linear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, 2, LinearComposition),
+    'TRE nonlinear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, 2, MLPComposition),
+    'generalisation': Generalisation(),
     'positional disentanglement': PositionalDisentanglement(2, 2),
     'BOW disentanglement': BagOfWordsDisentanglement(2, 2),
 }
