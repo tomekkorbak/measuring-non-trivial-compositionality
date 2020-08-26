@@ -19,6 +19,7 @@ NN_CONFIG = {
     'weight_decay': 1e-6
 }
 
+
 def loss_nll(_sender_input, _message, _receiver_input, receiver_output, labels):
     nll_1 = torch.nn.functional.cross_entropy(receiver_output[0], labels[0], reduction="none")
     nll_2 = torch.nn.functional.cross_entropy(receiver_output[1], labels[1], reduction="none")

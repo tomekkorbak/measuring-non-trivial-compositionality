@@ -1,7 +1,7 @@
 import random
 from itertools import product
 import string
-from typing import Tuple, Union, Dict
+from typing import Tuple, Union, Dict, List
 from copy import deepcopy
 
 
@@ -65,7 +65,6 @@ def get_random_protocol(num_colors: int, num_shapes: int) -> Protocol:
 
 
 def get_order_sensitive_ntc_protocol(num_colors: int, num_shapes: int) -> Protocol:
-    assert num_colors < 9 and num_colors == num_colors
     objects = product(POSSIBLE_COLORS[:num_colors], POSSIBLE_SHAPES[:num_shapes])
     alphabet = list(string.ascii_letters[:num_colors])
     random.shuffle(alphabet)

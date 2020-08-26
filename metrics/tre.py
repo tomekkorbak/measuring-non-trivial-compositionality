@@ -139,8 +139,8 @@ class TreeReconstructionError(Metric):
             messages=tensorised_protocol.values(),
             derivations=tensorised_protocol.keys(),
             objective=objective,
-            optimizer=torch.optim.Adam(objective.parameters(), lr=1e-3, weight_decay=1e-3),
-            n_epochs=5_000
+            optimizer=torch.optim.Adam(objective.parameters(), lr=1e-1, weight_decay=1e-5),
+            n_epochs=1_000
         )
         return reconstruction_error
 

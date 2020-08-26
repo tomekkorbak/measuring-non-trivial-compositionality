@@ -67,7 +67,7 @@ class Disentanglement(Metric):
         return sum(disentanglement_scores)/non_constant_positions
 
 
-class PositionalDisentanglement(Metric):
+class PositionalDisentanglement(Disentanglement):
 
     def __init__(self, max_message_length: int, num_concept_slots: int):
         self.max_message_length = max_message_length
@@ -75,7 +75,7 @@ class PositionalDisentanglement(Metric):
         self.permutation_invariant = False
 
 
-class BagOfWordsDisentanglement(Metric):
+class BagOfWordsDisentanglement(Disentanglement):
 
     def __init__(self, max_message_length: int, num_concept_slots: int):
         self.max_message_length = max_message_length

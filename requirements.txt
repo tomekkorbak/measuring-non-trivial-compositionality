@@ -6,3 +6,7 @@ scipy
 matplotlib
 seaborn
 -e git+https://github.com/facebookresearch/EGG.git#egg=EGG
+tqdm
+neptune-client
+neptune-contrib
+psutil
