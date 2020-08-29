@@ -1,9 +1,9 @@
 from collections import namedtuple
 
 import pandas as pd
-import seaborn as sns
 import matplotlib
 matplotlib.use('Agg')
+import seaborn as sns
 import neptune
 from neptunecontrib.api import log_table
 
