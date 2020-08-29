@@ -120,10 +120,12 @@ class TreeReconstructionError(Metric):
             num_concepts: int,
             message_length: int,
             composition_fn: Type[CompositionFunction],
+            weight_decay=1e-5,
     ):
         self.num_concepts = num_concepts
         self.message_length = message_length
         self.composition_fn = composition_fn
+        self.weight_decay = weight_decay
 
     def measure(self, protocol: Protocol) -> float:
         tensorised_protocol = self._protocol_to_tensor(protocol)
@@ -139,7 +141,7 @@ class TreeReconstructionError(Metric):
             messages=tensorised_protocol.values(),
             derivations=tensorised_protocol.keys(),
             objective=objective,
-            optimizer=torch.optim.Adam(objective.parameters(), lr=1e-1, weight_decay=1e-5),
+            optimizer=torch.optim.Adam(objective.parameters(), lr=1e-1, weight_decay=self.weight_decay),
             n_epochs=1_000
         )
         return reconstruction_error
