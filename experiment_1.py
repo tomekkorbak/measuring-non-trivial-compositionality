@@ -45,9 +45,9 @@ for seed in range(NUM_SEEDS):
                 messages_metric=editdistance.eval
             ),
             'context independence': ContextIndependence(num_concepts),
-            'TRE additive': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, max_length, AdditiveComposition),
-            'TRE linear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, max_length, LinearComposition),
-            # 'TRE nonlinear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, max_length, MLPComposition),
+            'TRE additive': TreeReconstructionError(num_concepts, max_length, AdditiveComposition),
+            'TRE linear': TreeReconstructionError(num_concepts, max_length, LinearComposition),
+            # 'TRE nonlinear': TreeReconstructionError(num_concepts, max_length, MLPComposition),
             'generalisation': Generalisation(),
             'positional disentanglement': PositionalDisentanglement(max_length, num_concept_slots),
             'BOW disentanglement': BagOfWordsDisentanglement(max_length, num_concept_slots),
