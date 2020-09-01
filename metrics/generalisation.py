@@ -21,6 +21,9 @@ NN_CONFIG = {
 
 
 def loss_nll(_sender_input, _message, _receiver_input, receiver_output, labels):
+    if isinstance(labels[1], tuple):
+        labels = labels[1]  # A dirty hack to support the context-sensitive protocol
+
     nll_1 = torch.nn.functional.cross_entropy(receiver_output[0], labels[0], reduction="none")
     nll_2 = torch.nn.functional.cross_entropy(receiver_output[1], labels[1], reduction="none")
     acc_1 = (labels[0] == receiver_output[0].argmax(dim=1)).float().mean()
