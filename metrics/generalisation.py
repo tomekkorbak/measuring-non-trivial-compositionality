@@ -21,9 +21,6 @@ NN_CONFIG = {
 
 
 def loss_nll(_sender_input, _message, _receiver_input, receiver_output, labels):
-    if isinstance(labels[1], tuple):
-        labels = labels[1]  # A dirty hack to support the context-sensitive protocol
-
     nll_1 = torch.nn.functional.cross_entropy(receiver_output[0], labels[0], reduction="none")
     nll_2 = torch.nn.functional.cross_entropy(receiver_output[1], labels[1], reduction="none")
     acc_1 = (labels[0] == receiver_output[0].argmax(dim=1)).float().mean()
@@ -59,8 +56,8 @@ class Receiver(torch.nn.Module):
 
 class Generalisation(Metric):
 
-    def __init__(self):
-        pass
+    def __init__(self, context_sensitive: bool):
+        self.context_sensitive = context_sensitive
 
     def measure(self, protocol: Protocol) -> float:
         vocab = get_vocab_from_protocol(protocol)
@@ -74,9 +71,15 @@ class Generalisation(Metric):
             num_layers=NN_CONFIG['cell_layers']
         )
         game = SenderReceiverRnnReinforce(sender, receiver, loss_nll, sender_entropy_coeff=0, receiver_entropy_coeff=0.05)
-        concept_set = set(concept for derivation in protocol.keys() for concept in flatten_derivation(derivation))
+        if self.context_sensitive:
+            concept_set = set(concept for derivation in protocol.keys() for concept in flatten_derivation(derivation)[1:])
+        else:
+            concept_set = set(concept for derivation in protocol.keys() for concept in flatten_derivation(derivation))
         concepts = {concept: idx for idx, concept in enumerate(concept_set)}
-        derivations = [(derivation, derivation_to_tensor(derivation, concepts)) for derivation in protocol.keys()]
+        if self.context_sensitive:
+            derivations = [(derivation, derivation_to_tensor(derivation[1], concepts)) for derivation in protocol.keys()]
+        else:
+            derivations = [(derivation, derivation_to_tensor(derivation, concepts)) for derivation in protocol.keys()]
         shuffle(derivations)
         split_idx = int(len(derivations)*0.8)
         train_derivations, test_derivations = derivations[:split_idx], derivations[split_idx:]
