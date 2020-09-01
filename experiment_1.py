@@ -1,6 +1,7 @@
+from collections import namedtuple
+
 from scipy.spatial.distance import hamming
 import editdistance
-
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
@@ -14,41 +15,46 @@ from metrics.tre import TreeReconstructionError, LinearComposition, AdditiveComp
 from metrics.disentanglement import PositionalDisentanglement, BagOfWordsDisentanglement
 from metrics.generalisation import Generalisation
 from protocols import get_trivially_compositional_protocol, get_random_protocol, \
-    get_nontrivially_compositional_protocol, get_holistic_protocol
+    get_nontrivially_compositional_protocol, get_holistic_protocol, get_order_sensitive_ntc_protocol, \
+    get_context_sensitive_ntc_protocol, get_negation_ntc_protocol
 
 
 sns.set_style("white")
-NUM_COLORS = NUM_SHAPES = 25
-NUM_SEEDS = 5
+NUM_COLORS = NUM_SHAPES = 5
+NUM_SEEDS = 1
 df = pd.DataFrame(columns=['protocol', 'metric', 'value', 'seed'])
 neptune.init('tomekkorbak/ntc')
 neptune.create_experiment(upload_source_files=['**/*.py*'], properties=dict(num_seeds=NUM_SEEDS, num_colors=NUM_COLORS))
 
-protocols = {
-    'holistic': get_holistic_protocol(NUM_COLORS, NUM_SHAPES),
-    'TC': get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES),
-    'random': get_random_protocol(NUM_COLORS, NUM_SHAPES),
-    'NTC': get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES),
-}
+protocol = namedtuple('Protocol', ['protocol_name', 'protocol_obj', 'max_length', 'num_concepts', 'num_concept_slots'])
+protocols = [
+    protocol('negation', get_negation_ntc_protocol(), 4, 11+3, 2),
+    protocol('context sensitive', get_context_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES+3, 3),
+    protocol('order sensitive', get_order_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES+3, 2),
+    protocol('entangled', get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
+    protocol('TC', get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
+    protocol('holistic', get_holistic_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
+    protocol('random', get_random_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2)
+]
 
-metrics = {
-    'topographic similarity': TopographicSimilarity(
-        input_metric=hamming,
-        messages_metric=editdistance.eval
-    ),
-    'context independence': ContextIndependence(NUM_COLORS, NUM_SHAPES),
-    'TRE additive': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, 2, AdditiveComposition),
-    'TRE linear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, 2, LinearComposition),
-    'TRE nonlinear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, 2, MLPComposition),
-    'generalisation': Generalisation(),
-    'positional disentanglement': PositionalDisentanglement(2, 2),
-    'BOW disentanglement': BagOfWordsDisentanglement(2, 2),
-}
 for seed in range(NUM_SEEDS):
-    for protocol_name, protocol in protocols.items():
+    for protocol_name, protocol_obj, max_length, num_concepts in protocols:
+        metrics = {
+            'topographic similarity': TopographicSimilarity(
+                input_metric=hamming,
+                messages_metric=editdistance.eval
+            ),
+            'context independence': ContextIndependence(num_concepts),
+            'TRE additive': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, max_length, AdditiveComposition),
+            'TRE linear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, max_length, LinearComposition),
+            # 'TRE nonlinear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, max_length, MLPComposition),
+            'generalisation': Generalisation(),
+            'positional disentanglement': PositionalDisentanglement(max_length, 2),
+            'BOW disentanglement': BagOfWordsDisentanglement(max_length, 2),
+        }
         for metric_name, metric in metrics.items():
             print(protocol_name, metric_name)
-            value = metric.measure(protocol)
+            value = metric.measure(protocol_obj)
             if metric_name.startswith('TRE'):
                 value = -value
             df.loc[len(df)] = [protocol_name, metric_name, value, seed]

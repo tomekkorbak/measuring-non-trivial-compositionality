@@ -3,7 +3,7 @@ from typing import Callable, List
 from scipy.stats import spearmanr
 
 from metrics.base import Metric, Protocol
-
+from metrics.utils import flatten_derivation
 
 class TopographicSimilarity(Metric):
 
@@ -16,7 +16,7 @@ class TopographicSimilarity(Metric):
             sequence=list(protocol.values()),
             metric=self.messages_metric)
         distance_inputs = self._compute_distances(
-            sequence=list(protocol.keys()),
+            sequence=[flatten_derivation(derivation) for derivation in protocol.keys()],
             metric=self.input_metric)
         return spearmanr(distance_messages, distance_inputs).correlation
 

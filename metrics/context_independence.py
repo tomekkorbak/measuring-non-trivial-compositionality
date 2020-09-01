@@ -4,19 +4,19 @@ from typing import Dict
 import numpy as np
 
 from metrics.base import Metric, Protocol
+from metrics.utils import flatten_derivation
 
 
 class ContextIndependence(Metric):
 
-    def __init__(self, num_colors: int, num_shapes: int):
-        self.num_colors = num_colors
-        self.num_shapes = num_shapes
-        self.num_concepts = num_colors + num_shapes
+    def __init__(self, num_concepts: int):
+        self.num_concepts = num_concepts
 
     def measure(self, protocol: Protocol) -> float:
         character_set = set(c for message in protocol.values() for c in message)
         vocab = {char: idx for idx, char in enumerate(character_set)}
-        concept_set = set(concept for concepts in protocol.keys() for concept in concepts)
+        concept_set = set(concept for concepts in protocol.keys()
+                          for concept in flatten_derivation(concepts))
         concepts = {concept: idx for idx, concept in enumerate(concept_set)}
 
         concept_symbol_matrix = self._compute_concept_symbol_matrix(protocol, vocab, concepts)
@@ -37,9 +37,10 @@ class ContextIndependence(Metric):
             epsilon: float = 10e-8
     ) -> np.ndarray:
         concept_to_message = defaultdict(list)
-        for (color, shape), message in protocol.items():
-            concept_to_message[color] += list(message)
-            concept_to_message[shape] += list(message)
+        for derivation, message in protocol.items():
+            for concept in flatten_derivation(derivation):
+                concept_to_message[concept] += list(message)
+                concept_to_message[concept] += list(message)
         concept_symbol_matrix = np.ndarray((self.num_concepts, len(vocab)))
         concept_symbol_matrix.fill(epsilon)
         for concept, symbols in concept_to_message.items():

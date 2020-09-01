@@ -4,6 +4,7 @@ from typing import List
 import numpy as np
 
 from metrics.base import Metric
+from metrics.utils import flatten_derivation
 from protocols import Protocol
 
 """
@@ -55,7 +56,7 @@ class Disentanglement(Metric):
             symbol_mutual_info = []
             symbol_entropy = compute_entropy(symbols_j)
             for i in range(self.num_concept_slots):
-                concepts_i = [derivation[i] for derivation in protocol.keys()]
+                concepts_i = [flatten_derivation(derivation)[i] for derivation in protocol.keys()]
                 mutual_info = compute_mutual_information(concepts_i, symbols_j)
                 symbol_mutual_info.append(mutual_info)
             symbol_mutual_info.sort(reverse=True)
@@ -81,6 +82,3 @@ class BagOfWordsDisentanglement(Disentanglement):
         self.max_message_length = max_message_length
         self.num_concept_slots = num_concept_slots
         self.permutation_invariant = True
-
-
-
