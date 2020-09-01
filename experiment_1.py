@@ -38,7 +38,7 @@ protocols = [
 ]
 
 for seed in range(NUM_SEEDS):
-    for protocol_name, protocol_obj, max_length, num_concepts in protocols:
+    for protocol_name, protocol_obj, max_length, num_concepts, num_concept_slots in protocols:
         metrics = {
             'topographic similarity': TopographicSimilarity(
                 input_metric=hamming,
@@ -49,8 +49,8 @@ for seed in range(NUM_SEEDS):
             'TRE linear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, max_length, LinearComposition),
             # 'TRE nonlinear': TreeReconstructionError(NUM_COLORS + NUM_SHAPES, max_length, MLPComposition),
             'generalisation': Generalisation(),
-            'positional disentanglement': PositionalDisentanglement(max_length, 2),
-            'BOW disentanglement': BagOfWordsDisentanglement(max_length, 2),
+            'positional disentanglement': PositionalDisentanglement(max_length, num_concept_slots),
+            'BOW disentanglement': BagOfWordsDisentanglement(max_length, num_concept_slots),
         }
         for metric_name, metric in metrics.items():
             print(protocol_name, metric_name)
