@@ -48,7 +48,7 @@ for seed in range(NUM_SEEDS):
             'TRE additive': TreeReconstructionError(num_concepts, max_length, AdditiveComposition),
             'TRE linear': TreeReconstructionError(num_concepts, max_length, LinearComposition),
             # 'TRE nonlinear': TreeReconstructionError(num_concepts, max_length, MLPComposition),
-            'generalisation': Generalisation(),
+            'generalisation': Generalisation(context_sensitive=(protocol_name == 'context sensitive')),
             'positional disentanglement': PositionalDisentanglement(max_length, num_concept_slots),
             'BOW disentanglement': BagOfWordsDisentanglement(max_length, num_concept_slots),
         }
