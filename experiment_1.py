@@ -20,8 +20,8 @@ from protocols import get_trivially_compositional_protocol, get_random_protocol,
 
 
 sns.set_style("white")
-NUM_COLORS = NUM_SHAPES = 5
-NUM_SEEDS = 1
+NUM_COLORS = NUM_SHAPES = 25
+NUM_SEEDS = 3
 df = pd.DataFrame(columns=['protocol', 'metric', 'value', 'seed'])
 neptune.init('tomekkorbak/ntc')
 neptune.create_experiment(upload_source_files=['**/*.py*'], properties=dict(num_seeds=NUM_SEEDS, num_colors=NUM_COLORS))
