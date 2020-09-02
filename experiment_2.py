@@ -13,9 +13,9 @@ from protocols import get_negation_ntc_protocol, get_context_sensitive_ntc_proto
     get_trivially_compositional_protocol, get_holistic_protocol, get_nontrivially_compositional_protocol
 
 sns.set_style("white")
-NUM_COLORS = NUM_SHAPES = 10
+NUM_COLORS = NUM_SHAPES = 25
 NUM_SEEDS = 3
-df = pd.DataFrame(columns=['protocol', 'metric', 'value', 'seed', 'wd'])
+df = pd.DataFrame(columns=['protocol', 'metric', 'value', 'seed'])
 neptune.init('tomekkorbak/ntc')
 neptune.create_experiment(upload_source_files=['**/*.py*'], properties=dict(num_seeds=NUM_SEEDS, num_colors=NUM_COLORS))
 protocol = namedtuple('Protocol', ['protocol_name', 'protocol_obj', 'max_length', 'num_concepts'])
@@ -28,17 +28,16 @@ protocols = [
     protocol('holistic', get_holistic_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES)
 ]
 for seed in range(NUM_SEEDS):
-    for wd in [1e-8, 1e-6, 1e-4]:
-        for protocol_name, protocol_obj, max_length, num_concepts in protocols:
-            metrics = {
-                'TRE additive': TreeReconstructionError(num_concepts, max_length, AdditiveComposition, weight_decay=wd),
-                'TRE linear': TreeReconstructionError(num_concepts, max_length, LinearComposition, weight_decay=wd),
-                'TRE nonlinear': TreeReconstructionError(num_concepts, max_length, MLPComposition, weight_decay=wd),
-            }
-            for metric_name, metric in metrics.items():
-                print(protocol_name, metric_name)
-                value = metric.measure(protocol_obj)
-                df.loc[len(df)] = [protocol_name, metric_name, -value, seed, wd]
+    for protocol_name, protocol_obj, max_length, num_concepts in protocols:
+        metrics = {
+            'TRE additive': TreeReconstructionError(num_concepts, max_length, AdditiveComposition),
+            'TRE linear': TreeReconstructionError(num_concepts, max_length, LinearComposition),
+            'TRE nonlinear': TreeReconstructionError(num_concepts, max_length, MLPComposition),
+        }
+        for metric_name, metric in metrics.items():
+            print(protocol_name, metric_name)
+            value = metric.measure(protocol_obj)
+            df.loc[len(df)] = [protocol_name, metric_name, -value, seed]
 log_table('df', df)
 df.to_csv('results_2.csv')
 
