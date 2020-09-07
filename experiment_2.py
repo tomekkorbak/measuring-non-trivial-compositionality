@@ -44,7 +44,7 @@ df.to_csv('results_2.csv')
 
 with sns.plotting_context('paper', font_scale = 1.3):
     all_tre = df[df['protocol'] != 'holistic']
-    p = sns.catplot(x='value', y='protocol', col='metric', row='wd', data=df, kind='box',
+    p = sns.catplot(x='value', y='protocol', col='metric', data=df, kind='box',
                     sharex=True, height=2.5, margin_titles=True)
     p.set_titles(row_template='{row_name}', col_template = '{col_name}')
     p.savefig('figure_1.png')
