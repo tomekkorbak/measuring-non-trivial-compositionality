@@ -4,6 +4,8 @@ import string
 from typing import Tuple, Union, Dict, List
 from copy import deepcopy
 
+from tabulate import tabulate
+
 
 Derivation = Union[str, Tuple['Derivation', 'Derivation']]
 Protocol = Dict[Derivation, str]
@@ -140,3 +142,25 @@ def get_diagonal_ntc_protocol(num_colors: int, num_shapes: int) -> Protocol:
                                      else num_colors - i - 1]
             mapping[color, shape] = first_letter + second_letter
     return mapping
+
+
+def print_protocol(protocols: Dict[str, Protocol]):
+    table = {}
+    for protocol_name, protocol in protocols.items():
+        table['derivation'] = [f'{color} {shape}' for color, shape in protocol.keys()]
+        table[protocol_name] = [val.replace('_', '') for val in protocol.values()]
+    return tabulate(table, tablefmt='latex_booktabs', headers="keys")
+
+
+if __name__ == '__main__':
+    NUM_COLORS = NUM_SHAPES = 5
+    protocols = {
+        'holistic': get_holistic_protocol(NUM_COLORS, NUM_SHAPES),
+        'TC': get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES),
+        'random': get_random_protocol(NUM_COLORS, NUM_SHAPES),
+        'NTC': get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES),
+        'negation': get_negation_ntc_protocol(),
+        'order sensitive': get_order_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES),
+        'diagonal': get_diagonal_ntc_protocol(NUM_COLORS, NUM_SHAPES)
+    }
+    print(print_protocol(protocols))
