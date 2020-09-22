@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 
 from metrics.base import Metric
-from metrics.utils import flatten_derivation
+from metrics.utils import flatten_derivation, get_vocab_from_protocol
 from protocols import Protocol
 
 """
@@ -19,25 +19,21 @@ def compute_entropy(symbols: List[str]) -> float:
     for symbol in symbols:
         frequency_table[symbol] += 1.0
     H = 0
-    for symbol, freq in frequency_table.items():
+    for symbol in frequency_table:
         p = frequency_table[symbol]/len(symbols)
-        H += -p * np.log(p)
-    return H / np.log(2)
+        H += -p * np.log2(p)
+    return H
 
 
 def compute_mutual_information(concepts: List[str], symbols: List[str]) -> float:
     concept_entropy = compute_entropy(concepts)  # H[p(concepts)]
     symbol_entropy = compute_entropy(symbols)  # H[p(symbols)]
-    symbols_and_concepts = [symbol + concept for symbol, concept in zip(symbols, concepts)]
+    symbols_and_concepts = [symbol + '_' + concept for symbol, concept in zip(symbols, concepts)]
     symbol_concept_joint_entropy = compute_entropy(symbols_and_concepts)  # H[p(concepts, symbols)]
     return concept_entropy + symbol_entropy - symbol_concept_joint_entropy
 
 
-def get_permutation_invariant_protocol(protocol: Protocol) -> Protocol:
-    return {derivation: sorted(message) for derivation, message in protocol.items()}
-
-
-class Disentanglement(Metric):
+class PositionalDisentanglement(Metric):
 
     def __init__(self, max_message_length: int, num_concept_slots: int):
         self.max_message_length = max_message_length
@@ -45,9 +41,6 @@ class Disentanglement(Metric):
         self.permutation_invariant = False
 
     def measure(self, protocol: Protocol) -> float:
-        if self.permutation_invariant:
-            protocol = get_permutation_invariant_protocol(protocol)
-
         disentanglement_scores = []
         non_constant_positions = 0
 
@@ -65,20 +58,25 @@ class Disentanglement(Metric):
                 disentanglement_score = (symbol_mutual_info[0] - symbol_mutual_info[1]) / symbol_entropy
                 disentanglement_scores.append(disentanglement_score)
                 non_constant_positions += 1
-        return sum(disentanglement_scores)/non_constant_positions
+            if non_constant_positions > 0:
+                return sum(disentanglement_scores)/non_constant_positions
+            else:
+                return float('nan')
 
 
-class PositionalDisentanglement(Disentanglement):
-
-    def __init__(self, max_message_length: int, num_concept_slots: int):
-        self.max_message_length = max_message_length
-        self.num_concept_slots = num_concept_slots
-        self.permutation_invariant = False
-
-
-class BagOfWordsDisentanglement(Disentanglement):
+class BagOfWordsDisentanglement(PositionalDisentanglement):
 
     def __init__(self, max_message_length: int, num_concept_slots: int):
         self.max_message_length = max_message_length
         self.num_concept_slots = num_concept_slots
-        self.permutation_invariant = True
+
+    def measure(self, protocol: Protocol) -> float:
+        vocab = list(get_vocab_from_protocol(protocol))
+        num_symbols = len(vocab)
+        bow_protocol = {}
+        for derivation, message in protocol.items():
+            message_bow = [0 for _ in range(num_symbols)]
+            for symbol in message:
+                message_bow[vocab.index(symbol)] += 1
+            bow_protocol[derivation] = [str(symbol) for symbol in message_bow]
+        return super().measure(bow_protocol)

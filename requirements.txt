@@ -10,3 +10,4 @@ tqdm
 neptune-client
 neptune-contrib
 psutil
+tabulate
