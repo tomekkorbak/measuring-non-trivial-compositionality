@@ -10,7 +10,8 @@ from neptunecontrib.api import log_table
 
 from metrics.tre import TreeReconstructionError, LinearComposition, AdditiveComposition, MLPComposition
 from protocols import get_negation_ntc_protocol, get_context_sensitive_ntc_protocol, get_order_sensitive_ntc_protocol, \
-    get_trivially_compositional_protocol, get_holistic_protocol, get_nontrivially_compositional_protocol
+    get_trivially_compositional_protocol, get_holistic_protocol, get_nontrivially_compositional_protocol, \
+    get_diagonal_ntc_protocol
 
 sns.set_style("white")
 NUM_COLORS = NUM_SHAPES = 25
@@ -24,6 +25,7 @@ protocols = [
     protocol('context sensitive', get_context_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES+3),
     protocol('order sensitive', get_order_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES+3),
     protocol('entangled', get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES),
+    protocol('diagonal', get_diagonal_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES),
     protocol('TC', get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES),
     protocol('holistic', get_holistic_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES)
 ]
@@ -49,4 +51,3 @@ with sns.plotting_context('paper', font_scale = 1.3):
     p.set_titles(row_template='{row_name}', col_template = '{col_name}')
     p.savefig('figure_1.png')
     neptune.log_image('figure', 'figure_1.png')
-

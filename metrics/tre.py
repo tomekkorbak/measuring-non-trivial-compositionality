@@ -13,7 +13,7 @@ class CompositionFunction(torch.nn.Module):
         super().__init__()
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class AdditiveComposition(CompositionFunction):
