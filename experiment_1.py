@@ -16,8 +16,8 @@ from metrics.disentanglement import PositionalDisentanglement, BagOfWordsDisenta
 from metrics.generalisation import Generalisation
 from protocols import get_trivially_compositional_protocol, get_random_protocol, \
     get_nontrivially_compositional_protocol, get_holistic_protocol, get_order_sensitive_ntc_protocol, \
-    get_context_sensitive_ntc_protocol, get_negation_ntc_protocol
-
+    get_context_sensitive_ntc_protocol, get_negation_ntc_protocol, \
+    get_diagonal_ntc_protocol
 
 sns.set_style("white")
 NUM_COLORS = NUM_SHAPES = 25
@@ -34,7 +34,8 @@ protocols = [
     protocol('entangled', get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
     protocol('TC', get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
     protocol('holistic', get_holistic_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
-    protocol('random', get_random_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2)
+    protocol('random', get_random_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
+    protocol('diagonal', get_diagonal_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
 ]
 
 for seed in range(NUM_SEEDS):
@@ -87,5 +88,3 @@ with sns.plotting_context('paper', font_scale = 1.3, rc={"lines.linewidth": 2.5}
                 aspect=1, s=10, jitter=0.2)
     p.savefig('figure_2.png')
     neptune.log_image('figure', 'figure_2.png')
-
-
