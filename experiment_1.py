@@ -14,6 +14,7 @@ from metrics.context_independence import ContextIndependence
 from metrics.tre import TreeReconstructionError, LinearComposition, AdditiveComposition, MLPComposition
 from metrics.disentanglement import PositionalDisentanglement, BagOfWordsDisentanglement
 from metrics.generalisation import Generalisation
+from metrics.conflict_count import ConflictCount
 from protocols import get_trivially_compositional_protocol, get_random_protocol, \
     get_nontrivially_compositional_protocol, get_holistic_protocol, get_order_sensitive_ntc_protocol, \
     get_context_sensitive_ntc_protocol, get_negation_ntc_protocol, \
@@ -52,8 +53,11 @@ for seed in range(NUM_SEEDS):
             'generalisation': Generalisation(context_sensitive=(protocol_name == 'context sensitive')),
             'positional disentanglement': PositionalDisentanglement(max_length, num_concept_slots),
             'BOW disentanglement': BagOfWordsDisentanglement(max_length, num_concept_slots),
+            'conflict count': ConflictCount(max_length)
         }
         for metric_name, metric in metrics.items():
+            if protocol_name in ['negation', 'context sensitive'] and metric_name == 'conflict count':
+                continue
             print(protocol_name, metric_name)
             value = metric.measure(protocol_obj)
             if metric_name.startswith('TRE'):
@@ -70,7 +74,7 @@ with sns.plotting_context('paper', font_scale = 1.3, rc={"lines.linewidth": 2.5}
     p = sns.catplot(x='value', y='protocol', col='metric', data=without_nonlinear, kind='box',
                     sharex=False, col_wrap=4, height=2.5, margin_titles=True)
     p.set_titles(row_template='{row_name}', col_template='{col_name}')
-    p.savefig('figure_1.png')
+    p.savefig('figure_1.png', dpi=300)
     neptune.log_image('figure', 'figure_1.png')
 
 
@@ -86,5 +90,5 @@ with sns.plotting_context('paper', font_scale = 1.3, rc={"lines.linewidth": 2.5}
     without_nonlinear = df[df['metric'] != 'TRE with non-linear composition']
     sns.catplot(x='normalised value', y='protocol', hue='metric', data=without_nonlinear,
                 aspect=1, s=10, jitter=0.2)
-    p.savefig('figure_2.png')
+    p.savefig('figure_2.png', dpi=300)
     neptune.log_image('figure', 'figure_2.png')
