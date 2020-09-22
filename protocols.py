@@ -130,13 +130,35 @@ def get_context_sensitive_ntc_protocol(num_colors: int, num_shapes: int) -> Prot
 
 
 def get_diagonal_ntc_protocol(num_colors: int, num_shapes: int) -> Protocol:
+    """
+    first symbol -- index of matrix diagonal
+    second symbol -- position on the diagonal
+    """
     num_letters = num_colors + num_shapes
     alphabet = list(string.ascii_letters[:num_letters])
     mapping = {}
+    random.shuffle(alphabet)
     for i, color in enumerate(POSSIBLE_COLORS[:num_colors]):
         for j, shape in enumerate(POSSIBLE_SHAPES[:num_shapes]):
             first_letter = alphabet[i + j]
             second_letter = alphabet[j if i + j < num_colors
                                      else num_colors - i - 1]
+            mapping[color, shape] = first_letter + second_letter
+    return mapping
+
+
+def get_rotated_tc_protocol(num_colors: int, num_shapes: int) -> Protocol:
+    """
+    Trivially compositional protocol with axes rotated 45 degrees
+    -- very similar to entangled.
+    """
+    num_letters = num_colors + num_shapes
+    alphabet = list(string.ascii_letters[:num_letters])
+    mapping = {}
+    random.shuffle(alphabet)
+    for i, color in enumerate(POSSIBLE_COLORS[:num_colors]):
+        for j, shape in enumerate(POSSIBLE_SHAPES[:num_shapes]):
+            first_letter = alphabet[i - j + num_shapes]
+            second_letter = alphabet[j + i]
             mapping[color, shape] = first_letter + second_letter
     return mapping
