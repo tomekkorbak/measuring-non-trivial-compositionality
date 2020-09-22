@@ -69,7 +69,6 @@ class BagOfWordsDisentanglement(PositionalDisentanglement):
     def __init__(self, max_message_length: int, num_concept_slots: int):
         self.max_message_length = max_message_length
         self.num_concept_slots = num_concept_slots
-        self.permutation_invariant = True
 
     def measure(self, protocol: Protocol) -> float:
         vocab = list(get_vocab_from_protocol(protocol))
