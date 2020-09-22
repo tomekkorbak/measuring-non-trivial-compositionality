@@ -183,7 +183,7 @@ if __name__ == '__main__':
         'NTC': get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES),
         'negation': get_negation_ntc_protocol(),
         'order sensitive': get_order_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES),
-        'diagonal': get_diagonal_ntc_protocol(NUM_COLORS, NUM_SHAPES)
+        'diagonal': get_diagonal_ntc_protocol(NUM_COLORS, NUM_SHAPES),
         'rotated': get_rotated_ntc_protocol(NUM_COLORS, NUM_SHAPES)
     }
     print(print_protocol(protocols))
