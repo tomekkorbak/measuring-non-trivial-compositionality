@@ -9,8 +9,6 @@ from metrics.topographic_similarity import TopographicSimilarity
 from metrics.context_independence import ContextIndependence
 from metrics.disentanglement import PositionalDisentanglement, BagOfWordsDisentanglement
 from metrics.tre import TreeReconstructionError, AdditiveComposition
-from metrics.generalisation import Generalisation
-from metrics.conflict_count import ConflictCount
 from protocols import get_trivially_compositional_protocol
 
 

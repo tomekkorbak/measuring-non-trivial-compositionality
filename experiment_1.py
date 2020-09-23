@@ -11,7 +11,7 @@ from neptunecontrib.api import log_table
 
 from metrics.topographic_similarity import TopographicSimilarity
 from metrics.context_independence import ContextIndependence
-from metrics.tre import TreeReconstructionError, LinearComposition, AdditiveComposition, MLPComposition
+from metrics.tre import TreeReconstructionError, LinearComposition, AdditiveComposition
 from metrics.disentanglement import PositionalDisentanglement, BagOfWordsDisentanglement
 from metrics.generalisation import Generalisation
 from metrics.conflict_count import ConflictCount
@@ -22,7 +22,7 @@ from protocols import get_trivially_compositional_protocol, get_random_protocol,
 
 sns.set_style("white")
 NUM_COLORS = NUM_SHAPES = 25
-NUM_SEEDS = 3
+NUM_SEEDS = 5
 df = pd.DataFrame(columns=['protocol', 'metric', 'value', 'seed'])
 neptune.init('tomekkorbak/ntc')
 neptune.create_experiment(upload_source_files=['**/*.py*'], properties=dict(num_seeds=NUM_SEEDS, num_colors=NUM_COLORS))
