@@ -5,6 +5,7 @@ from scipy.stats import spearmanr
 from metrics.base import Metric, Protocol
 from metrics.utils import flatten_derivation
 
+
 class TopographicSimilarity(Metric):
 
     def __init__(self, input_metric: Callable, messages_metric: Callable):
