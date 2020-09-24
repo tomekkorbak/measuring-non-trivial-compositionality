@@ -7,11 +7,11 @@ import seaborn as sns
 import neptune
 from neptunecontrib.api import log_table
 
-
 from metrics.tre import TreeReconstructionError, LinearComposition, AdditiveComposition, MLPComposition
-from protocols import get_negation_ntc_protocol, get_context_sensitive_ntc_protocol, get_order_sensitive_ntc_protocol, \
-    get_trivially_compositional_protocol, get_holistic_protocol, get_nontrivially_compositional_protocol, \
-    get_diagonal_ntc_protocol
+from protocols import get_trivially_compositional_protocol, get_random_protocol, \
+    get_nontrivially_compositional_protocol, get_holistic_protocol, get_order_sensitive_ntc_protocol, \
+    get_context_sensitive_ntc_protocol, get_negation_ntc_protocol, \
+    get_diagonal_ntc_protocol, get_rotated_ntc_protocol
 
 sns.set_style("white")
 NUM_COLORS = NUM_SHAPES = 25
@@ -21,13 +21,15 @@ neptune.init('tomekkorbak/ntc')
 neptune.create_experiment(upload_source_files=['**/*.py*'], properties=dict(num_seeds=NUM_SEEDS, num_colors=NUM_COLORS))
 protocol = namedtuple('Protocol', ['protocol_name', 'protocol_obj', 'max_length', 'num_concepts'])
 protocols = [
-    protocol('negation', get_negation_ntc_protocol(), 4, 11+3),
-    protocol('context sensitive', get_context_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES+3),
-    protocol('order sensitive', get_order_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES+3),
-    protocol('entangled', get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES),
-    protocol('diagonal', get_diagonal_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES),
-    protocol('TC', get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES),
-    protocol('holistic', get_holistic_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES)
+    protocol('TC', get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS + NUM_SHAPES, 2),
+    protocol('negation', get_negation_ntc_protocol(), 4, 11+3, 2),
+    protocol('context sensitive', get_context_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES+3, 3),
+    protocol('order sensitive', get_order_sensitive_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES+3, 2),
+    protocol('entangled', get_nontrivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
+    protocol('holistic', get_holistic_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
+    protocol('random', get_random_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
+    protocol('diagonal', get_diagonal_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
+    protocol('rotated', get_rotated_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
 ]
 for seed in range(NUM_SEEDS):
     for protocol_name, protocol_obj, max_length, num_concepts in protocols:
