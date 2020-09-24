@@ -19,7 +19,7 @@ NUM_SEEDS = 3
 df = pd.DataFrame(columns=['protocol', 'metric', 'value', 'seed'])
 neptune.init('tomekkorbak/ntc')
 neptune.create_experiment(upload_source_files=['**/*.py*'], properties=dict(num_seeds=NUM_SEEDS, num_colors=NUM_COLORS))
-protocol = namedtuple('Protocol', ['protocol_name', 'protocol_obj', 'max_length', 'num_concepts'])
+protocol = namedtuple('Protocol', ['protocol_name', 'protocol_obj', 'max_length', 'num_concepts', 'num_concept_slots'])
 protocols = [
     protocol('TC', get_trivially_compositional_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS + NUM_SHAPES, 2),
     protocol('negation', get_negation_ntc_protocol(), 4, 11+3, 2),
@@ -32,7 +32,7 @@ protocols = [
     protocol('rotated', get_rotated_ntc_protocol(NUM_COLORS, NUM_SHAPES), 2, NUM_COLORS+NUM_SHAPES, 2),
 ]
 for seed in range(NUM_SEEDS):
-    for protocol_name, protocol_obj, max_length, num_concepts in protocols:
+    for protocol_name, protocol_obj, max_length, num_concepts, _ in protocols:
         metrics = {
             'TRE additive': TreeReconstructionError(num_concepts, max_length, AdditiveComposition),
             'TRE linear': TreeReconstructionError(num_concepts, max_length, LinearComposition),
