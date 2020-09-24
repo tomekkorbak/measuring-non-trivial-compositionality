@@ -40,7 +40,6 @@ class ContextIndependence(Metric):
         for derivation, message in protocol.items():
             for concept in flatten_derivation(derivation):
                 concept_to_message[concept] += list(message)
-                concept_to_message[concept] += list(message)
         concept_symbol_matrix = np.ndarray((self.num_concepts, len(vocab)))
         concept_symbol_matrix.fill(epsilon)
         for concept, symbols in concept_to_message.items():
