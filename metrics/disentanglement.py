@@ -61,7 +61,7 @@ class PositionalDisentanglement(Metric):
             if non_constant_positions > 0:
                 return sum(disentanglement_scores)/non_constant_positions
             else:
-                return 0
+                return np.nan
 
 
 class BagOfWordsDisentanglement(PositionalDisentanglement):
