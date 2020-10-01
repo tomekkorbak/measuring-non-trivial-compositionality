@@ -11,3 +11,5 @@ To install all the dependencies, run `pip install -r requirements.txt`. We assum
 To reproduce the results and plots from the main experiment (how each metric scores each protocol), run `python experiment_1.py`.
 
 To reproduce the results and plots from the experiment in appendix C (how the composition function in TRE affects compositionality scores), run `python experiment_2.py`.
+
+To run init tests for the metrics, run `pytest`.
