@@ -58,10 +58,10 @@ class PositionalDisentanglement(Metric):
                 disentanglement_score = (symbol_mutual_info[0] - symbol_mutual_info[1]) / symbol_entropy
                 disentanglement_scores.append(disentanglement_score)
                 non_constant_positions += 1
-            if non_constant_positions > 0:
-                return sum(disentanglement_scores)/non_constant_positions
-            else:
-                return np.nan
+        if non_constant_positions > 0:
+            return sum(disentanglement_scores)/non_constant_positions
+        else:
+            return np.nan
 
 
 class BagOfWordsDisentanglement(PositionalDisentanglement):
